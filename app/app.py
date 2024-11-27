@@ -122,11 +122,22 @@ def register():
     
     return render_template("register.html")  # Render the registration page
 
+import pandas as pd
+from pathlib import Path
+
 @app.route('/dashboard', methods=["GET", "POST"])
 def dashboard():
     if "user" not in session:  # Ensure the user is logged in
         print("User not logged in!")  # Debugging log
         return redirect(url_for("login"))
+
+    # Read username from Excel file
+    excel_path = Path("E:/My Cloud Storage/data/users.xlsx")
+    df = pd.read_excel(excel_path)
+    
+    # Find username for the logged-in user's email
+    user_row = df[df['email'] == session["user"]]
+    username = user_row['username'].iloc[0] if not user_row.empty else session["user"]
 
     # Define the user folder path for the logged-in user
     user_folder = os.path.join(storage_path, "users", session["user"])
@@ -147,7 +158,8 @@ def dashboard():
 
     # Get a list of files and folders for the current user
     items = os.listdir(user_folder)
-    return render_template("dashboard.html", items=items, user=session["user"])
+    return render_template("dashboard.html", items=items, username=username)
+
 
 @app.route('/download/<filename>')
 def download(filename):
